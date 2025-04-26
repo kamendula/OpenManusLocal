@@ -37,7 +37,11 @@ class Manus(ToolCallAgent):
 
     browser_context_helper: Optional[BrowserContextHelper] = None
 
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # 这个装饰器用于在模型实例化后进行验证和初始化
+                                   # 主要作用是初始化 browser_context_helper
+                                   # 因为 BrowserUseTool 需要特殊的上下文管理
+                                   # 比如浏览器状态、页面信息等
+                                   # 其他工具不需要这种特殊处理
     def initialize_helper(self) -> "Manus":
         self.browser_context_helper = BrowserContextHelper(self)
         return self

@@ -22,7 +22,14 @@ class ReActAgent(BaseAgent, ABC):
     max_steps: int = 10
     current_step: int = 0
 
-    @abstractmethod
+    @abstractmethod  # 这个装饰器表示这是一个抽象方法
+                    # 主要作用:
+                    # 1. 强制子类必须实现这个方法
+                    # 2. 防止直接实例化包含该方法的类
+                    # 3. 定义接口规范
+                    # 使用场景:
+                    # - 当我们希望定义一个基类的标准接口
+                    # - 但具体实现需要由子类完成时使用
     async def think(self) -> bool:
         """Process current state and decide next action"""
 

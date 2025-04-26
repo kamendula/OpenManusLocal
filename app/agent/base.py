@@ -46,7 +46,12 @@ class BaseAgent(BaseModel, ABC):
         arbitrary_types_allowed = True
         extra = "allow"  # Allow extra fields for flexibility in subclasses
 
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # 这个装饰器用于在模型实例化后进行验证和初始化
+                                   # mode="after" 表示在所有字段都被设置后执行验证
+                                   # 验证方式:
+                                   # 1. 检查 llm 是否为 LLM 实例,不是则创建新实例
+                                   # 2. 检查 memory 是否为 Memory 实例,不是则创建新实例
+                                   # 3. 返回验证后的实例
     def initialize_agent(self) -> "BaseAgent":
         """Initialize agent with default settings if not provided."""
         if self.llm is None or not isinstance(self.llm, LLM):
@@ -55,7 +60,16 @@ class BaseAgent(BaseModel, ABC):
             self.memory = Memory()
         return self
 
-    @asynccontextmanager
+    @asynccontextmanager  # 这是一个异步上下文管理器装饰器
+                         # 用于创建异步上下文管理器,使代码可以在异步环境中使用 async with 语句
+                         # 主要用途:
+                         # 1. 管理异步资源的获取和释放
+                         # 2. 确保资源在使用完后被正确清理
+                         # 3. 处理异常情况下的资源释放
+                         # 使用方式:
+                         # async with state_context(new_state):
+                         #     # 在这个代码块中使用新状态
+                         #     # 退出时自动恢复原状态
     async def state_context(self, new_state: AgentState):
         """Context manager for safe agent state transitions.
 
@@ -132,6 +146,8 @@ class BaseAgent(BaseModel, ABC):
             self.update_memory("user", request)
 
         results: List[str] = []
+        # 使用上下文管理器临时将代理状态设置为运行中
+        # 当代码块结束时会自动恢复到之前的状态
         async with self.state_context(AgentState.RUNNING):
             while (
                 self.current_step < self.max_steps and self.state != AgentState.FINISHED

@@ -8,6 +8,17 @@ from app.tool import Bash, StrReplaceEditor, Terminate, ToolCollection
 
 
 class SWEAgent(ToolCallAgent):
+    """
+    SWE (Software Engineer) Agent - 软件工程师代理
+
+    这是一个模拟软件工程师工作方式的智能代理。它可以:
+    - 编写和修改代码
+    - 执行命令行操作
+    - 进行代码审查和重构
+    - 解决编程相关问题
+
+    继承自 ToolCallAgent 以使用各种开发工具。
+    """
     """An agent that implements the SWEAgent paradigm for executing code and natural conversations."""
 
     name: str = "swe"

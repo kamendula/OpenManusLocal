@@ -92,7 +92,53 @@ class PlanningFlow(BaseFlow):
         return self.primary_agent
 
     async def execute(self, input_text: str) -> str:
-        """Execute the planning flow with agents."""
+        """执行规划流程，管理整个任务的执行过程。
+
+        执行流程:
+        1. 检查是否有主要代理(primary agent)可用
+        2. 如果提供了输入文本:
+           - 调用_create_initial_plan创建初始计划
+           - 验证计划是否成功创建
+        3. 进入主执行循环:
+           - 获取当前需要执行的步骤信息
+           - 如果没有更多步骤，调用_finalize_plan完成计划
+           - 根据步骤类型选择合适的执行代理
+           - 执行当前步骤并收集结果
+           - 检查代理是否要求终止执行
+        4. 返回执行结果
+
+        Args:
+            input_text (str): 用户输入的任务描述文本
+
+        Returns:
+            str: 执行结果的字符串描述
+
+        Raises:
+            ValueError: 当没有可用的主要代理时
+            Exception: 执行过程中的其他错误
+
+
+        第一次调用（在 if response.tool_calls: 块内）：
+            这是主要的计划创建方式
+            当 LLM（大语言模型）成功返回一个计划时，会执行这个调用
+            这个计划是 LLM 根据用户的需求智能生成的
+            如果这个调用成功，函数会直接返回，不会执行第二次调用
+        第二次调用（在 if response.tool_calls: 块外）：
+            这是一个后备方案（fallback plan）
+            只有当第一次调用失败时才会执行
+            创建一个默认的简单计划，包含三个基本步骤：
+            "Analyze request"（分析请求）
+            "Execute task"（执行任务）
+            "Verify results"（验证结果）
+        这是一个保险机制，确保即使 LLM 无法生成计划，系统也能继续工作
+        简单来说，这就像是一个"Plan B"（备选方案）：
+            首先尝试让 AI 智能地创建一个计划（第一次调用）
+        如果 AI 失败了，就使用一个简单的默认计划（第二次调用）
+        这样的设计可以确保系统在任何情况下都能继续工作，不会因为 AI 的失败而完全停止。这就像是你做作业时：
+            先尝试自己思考解决问题（第一次调用）
+            如果实在想不出来，就使用老师教的基本方法（第二次调用）
+        这种设计模式在编程中很常见，叫做"fallback mechanism"（后备机制），目的是让系统更加健壮和可靠。
+        """
         try:
             if not self.primary_agent:
                 raise ValueError("No primary agent available")
@@ -121,6 +167,8 @@ class PlanningFlow(BaseFlow):
                 # Execute current step with appropriate agent
                 step_type = step_info.get("type") if step_info else None
                 executor = self.get_executor(step_type)
+                # await会暂停当前函数的执行，直到_execute_step完成并返回结果
+                # 这确保了步骤按顺序串行执行，而不是并行执行
                 step_result = await self._execute_step(executor, step_info)
                 result += step_result + "\n"
 
